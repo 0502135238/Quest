@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Quest</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+            min-height: 100vh;
+            color: white;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Animated background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .floating-orb {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: radial-gradient(circle, #00ffff, transparent);
+            border-radius: 50%;
+            animation: float-orb 8s ease-in-out infinite;
+            opacity: 0.7;
+        }
+
+        @keyframes float-orb {
+            0%, 100% { transform: translateY(0px) translateX(0px) scale(1); }
+            25% { transform: translateY(-30px) translateX(20px) scale(1.2); }
+            50% { transform: translateY(-10px) translateX(-15px) scale(0.8); }
+            75% { transform: translateY(-40px) translateX(10px) scale(1.1); }
+        }
+
+        .app-container {
+            position: relative;
+            z-index: 1;
+            max-width: 100%;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .header {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(20px);
+            padding: 20px;
+            border-bottom: 2px solid rgba(0, 255, 255, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .app-title {
+            font-size: 1.8rem;
+            font-weight: bold;
+            background: linear-gradient(45deg, #00ffff, #ff00ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+            animation: title-glow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes title-glow {
+            from { filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.8)); }
+            to { filter: drop-shadow(0 0 20px rgba(255, 0, 255, 0.8)); }
+        }
+
+        .user-level {
+            background: linear-gradient(135deg, #ff6b6b, #ffa500);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+            animation: level-pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes level-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* Stats Dashboard */
+        .stats-container {
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .stat-card {
+            background: rgba(0, 255, 255, 0.1);
+            border: 2px solid rgba(0, 255, 255, 0.3);
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.2), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .stat-card:hover::before {
+            left: 100%;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 255, 255, 0.4);
+            border-color: rgba(0, 255, 255, 0.6);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #00ffff;
+            text-shadow: 0 0 15px rgba(0, 255, 255, 0.8);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.8);
+            margin-top: 5px;
+        }
+
+        /* Streak Section */
+        .streak-section {
+            padding: 20px;
+            margin: 0 20px;
+            background: rgba(255, 215, 0, 0.1);
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            position: relative;
+        }
+
+        .streak-title {
+            text-align: center;
+            font-size: 1.5rem;
+            color: #ffd700;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+        }
+
+        .streak-counter {
+            text-align: center;
+            font-size: 3rem;
+            font-weight: bold;
+            color: #ffd700;
+            text-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
+            animation: streak-glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes streak-glow {
+            from { text-shadow: 0 0 20px rgba(255, 215, 0, 0.8); }
+            to { text-shadow: 0 0 40px rgba(255, 215, 0, 1), 0 0 60px rgba(255, 215, 0, 0.6); }
+        }
+
+        .streak-days {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .day-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .day-dot.active {
+            background: #ffd700;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
+            transform: scale(1.2);
+        }
+
+        /* Achievements Section */
+        .achievements-section {
+            padding: 20px;
+        }
+
+        .section-title {
+            font-size: 1.4rem;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #ff00ff;
+            text-shadow: 0 0 15px rgba(255, 0, 255, 0.6);
+        }
+
+        .achievements-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 15px;
+        }
+
+        .achievement-card {
+            background: rgba(255, 0, 255, 0.1);
+            border: 2px solid rgba(255, 0, 255, 0.3);
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .achievement-card.unlocked {
+            border-color: rgba(0, 255, 0, 0.6);
+            background: rgba(0, 255, 0, 0.1);
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+        }
+
+        .achievement-card:hover {
+            transform: translateY(-3px) scale(1.05);
+        }
+
+        .achievement-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            display: block;
+            filter: grayscale(100%);
+            transition: filter 0.3s ease;
+        }
+
+        .achievement-card.unlocked .achievement-icon {
+            filter: grayscale(0%);
+            animation: achievement-glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes achievement-glow {
+            from { text-shadow: 0 0 10px rgba(255, 255, 255, 0.5); }
+            to { text-shadow: 0 0 20px rgba(0, 255, 0, 0.8); }
+        }
+
+        .achievement-name {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .achievement-card.unlocked .achievement-name {
+            color: #00ff00;
+            font-weight: bold;
+        }
+
+        /* Daily Tasks */
+        .tasks-section {
+            padding: 20px;
+        }
+
+        .task-item {
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .task-item:hover {
+            border-color: rgba(0, 255, 255, 0.5);
+            transform: translateX(5px);
+        }
+
+        .task-item.completed {
+            border-color: rgba(0, 255, 0, 0.6);
+            background: rgba(0, 255, 0, 0.1);
+        }
+
+        .task-info {
+            flex: 1;
+        }
+
+        .task-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .task-reward {
+            font-size: 0.8rem;
+            color: #ffd700;
+        }
+
+        .task-progress {
+            width: 60px;
+            height: 30px;
+            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .task-progress:hover {
+            background: rgba(0, 255, 255, 0.2);
+            border-color: rgba(0, 255, 255, 0.5);
+        }
+
+        .task-progress.completed {
+            background: rgba(0, 255, 0, 0.3);
+            border-color: rgba(0, 255, 0, 0.6);
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            padding: 20px;
+            display: flex;
+            gap: 15px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 20px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .primary-btn {
+            background: linear-gradient(135deg, #00ffff, #0080ff);
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 255, 255, 0.4);
+        }
+
+        .primary-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(0, 255, 255, 0.6);
+        }
+
+        .secondary-btn {
+            background: linear-gradient(135deg, #ff6b6b, #ff8e8e);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+        }
+
+        .secondary-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(255, 107, 107, 0.6);
+        }
+
+        .action-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #00ff00, #00cc00);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 255, 0, 0.4);
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        /* Mobile optimizations */
+        @media (max-width: 768px) {
+            .header {
+                padding: 15px;
+            }
+            
+            .app-title {
+                font-size: 1.5rem;
+            }
+            
+            .stats-container {
+                padding: 15px;
+                gap: 10px;
+            }
+            
+            .stat-card {
+                padding: 15px;
+            }
+            
+            .streak-counter {
+                font-size: 2.5rem;
+            }
+        }
+
+        /* Loading animation */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .loading-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(0, 255, 255, 0.3);
+            border-top: 4px solid #00ffff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animation" id="bgAnimation"></div>
+    
+    <div class="app-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="app-title">NEON QUEST</div>
+            <div class="user-level" id="userLevel">Level 1</div>
+        </div>
+
+        <!-- Stats Dashboard -->
+        <div class="stats-container">
+            <div class="stat-card" onclick="animateCard(this)">
+                <div class="stat-number" id="totalPoints">0</div>
+                <div class="stat-label">Total Points</div>
+            </div>
+            <div class="stat-card" onclick="animateCard(this)">
+                <div class="stat-number" id="totalTasks">0</div>
+                <div class="stat-label">Tasks Completed</div>
+            </div>
+            <div class="stat-card" onclick="animateCard(this)">
+                <div class="stat-number" id="badgesCount">0</div>
+                <div class="stat-label">Badges Earned</div>
+            </div>
+            <div class="stat-card" onclick="animateCard(this)">
+                <div class="stat-number" id="daysActive">1</div>
+                <div class="stat-label">Days Active</div>
+            </div>
+        </div>
+
+        <!-- Streak Section -->
+        <div class="streak-section">
+            <div class="streak-title">🔥 Daily Streak</div>
+            <div class="streak-counter" id="streakCounter">3</div>
+            <div class="streak-days" id="streakDays">
+                <div class="day-dot active"></div>
+                <div class="day-dot active"></div>
+                <div class="day-dot active"></div>
+                <div class="day-dot"></div>
+                <div class="day-dot"></div>
+                <div class="day-dot"></div>
+                <div class="day-dot"></div>
+            </div>
+        </div>
+
+        <!-- Achievements -->
+        <div class="achievements-section">
+            <div class="section-title">🏆 Achievements</div>
+            <div class="achievements-grid" id="achievementsGrid">
+                <div class="achievement-card unlocked" onclick="unlockAchievement(this)">
+                    <span class="achievement-icon">⭐</span>
+                    <div class="achievement-name">First Steps</div>
+                </div>
+                <div class="achievement-card" onclick="unlockAchievement(this)">
+                    <span class="achievement-icon">🚀</span>
+                    <div class="achievement-name">Speed Demon</div>
+                </div>
+                <div class="achievement-card unlocked" onclick="unlockAchievement(this)">
+                    <span class="achievement-icon">💎</span>
+                    <div class="achievement-name">Gem Collector</div>
+                </div>
+                <div class="achievement-card" onclick="unlockAchievement(this)">
+                    <span class="achievement-icon">🏅</span>
+                    <div class="achievement-name">Champion</div>
+                </div>
+                <div class="achievement-card" onclick="unlockAchievement(this)">
+                    <span class="achievement-icon">⚡</span>
+                    <div class="achievement-name">Lightning</div>
+                </div>
+                <div class="achievement-card" onclick="unlockAchievement(this)">
+                    <span class="achievement-icon">👑</span>
+                    <div class="achievement-name">Royal</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Daily Tasks -->
+        <div class="tasks-section">
+            <div class="section-title">📋 Daily Tasks</div>
+            <div class="task-item" onclick="completeTask(this)">
+                <div class="task-info">
+                    <div class="task-title">Complete 5 Mini Games</div>
+                    <div class="task-reward">+50 Points</div>
+                </div>
+                <div class="task-progress">3/5</div>
+            </div>
+            <div class="task-item completed" onclick="completeTask(this)">
+                <div class="task-info">
+                    <div class="task-title">Login Daily</div>
+                    <div class="task-reward">+20 Points</div>
+                </div>
+                <div class="task-progress completed">✓</div>
+            </div>
+            <div class="task-item" onclick="completeTask(this)">
+                <div class="task-info">
+                    <div class="task-title">Share with Friends</div>
+                    <div class="task-reward">+100 Points</div>
+                </div>
+                <div class="task-progress">0/3</div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <button class="action-btn primary-btn" onclick="playGame()">🎮 Play Game</button>
+            <button class="action-btn secondary-btn" onclick="claimReward()">🎁 Claim Reward</button>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div class="notification" id="notification"></div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <script>
+        // Game state
+        let gameState = {
+            totalPoints: 150,
+            totalTasks: 12,
+            badgesCount: 2,
+            daysActive: 3,
+            streak: 3,
+            level: 1
+        };
+
+        // Initialize app
+        function initApp() {
+            createBackgroundAnimation();
+            updateStats();
+            loadGameState();
+        }
+
+        // Create floating orbs animation
+        function createBackgroundAnimation() {
+            const container = document.getElementById('bgAnimation');
+            const orbCount = 30;
+            
+            for (let i = 0; i < orbCount; i++) {
+                const orb = document.createElement('div');
+                orb.className = 'floating-orb';
+                orb.style.left = Math.random() * 100 + '%';
+                orb.style.top = Math.random() * 100 + '%';
+                orb.style.animationDelay = Math.random() * 8 + 's';
+                orb.style.animationDuration = (6 + Math.random() * 4) + 's';
+                container.appendChild(orb);
+            }
+        }
+
+        // Update stats display
+        function updateStats() {
+            document.getElementById('totalPoints').textContent = gameState.totalPoints;
+            document.getElementById('totalTasks').textContent = gameState.totalTasks;
+            document.getElementById('badgesCount').textContent = gameState.badgesCount;
+            document.getElementById('daysActive').textContent = gameState.daysActive;
+            document.getElementById('streakCounter').textContent = gameState.streak;
+            document.getElementById('userLevel').textContent = `Level ${gameState.level}`;
+        }
+
+        // Animate stat cards
+        function animateCard(card) {
+            card.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                card.style.transform = 'translateY(-5px) scale(1.05)';
+            }, 100);
+            setTimeout(() => {
+                card.style.transform = 'translateY(-5px)';
+            }, 300);
+        }
+
+        // Complete task
+        function completeTask(taskElement) {
+            if (taskElement.classList.contains('completed')) return;
+            
+            taskElement.classList.add('completed');
+            const progress = taskElement.querySelector('.task-progress');
+            progress.textContent = '✓';
+            progress.classList.add('completed');
+            
+            // Add points
+            gameState.totalPoints += 50;
+            gameState.totalTasks += 1;
+            updateStats();
+            
+            showNotification('Task completed! +50 points');
+            checkLevelUp();
+        }
+
+        // Unlock achievement
+        function unlockAchievement(achievementElement) {
+            if (achievementElement.classList.contains('unlocked')) return;
+            
+            achievementElement.classList.add('unlocked');
+            gameState.badgesCount += 1;
+            gameState.totalPoints += 100;
+            updateStats();
+            
+            showNotification('Achievement unlocked! +100 points');
+            checkLevelUp();
+        }
+
+        // Play game
+        function playGame() {
+            showLoading();
+            
+            setTimeout(() => {
+                hideLoading();
+                const points = Math.floor(Math.random() * 50) + 10;
+                gameState.totalPoints += points;
+                updateStats();
+                showNotification(`Game completed! +${points} points`);
+                checkLevelUp();
+            }, 2000);
+        }
+
+        // Claim reward
+        function claimReward() {
+            const rewards = [
+                { points: 25, message: 'Daily bonus claimed!' },
+                { points: 50, message: 'Lucky reward!' },
+                { points: 100, message: 'Jackpot!' },
+                { points: 10, message: 'Small reward claimed!' }
+            ];
+            
+            const reward = rewards[Math.floor(Math.random() * rewards.length)];
+            gameState.totalPoints += reward.points;
+            updateStats();
+            showNotification(`${reward.message} +${reward.points} points`);
+            checkLevelUp();
+        }
+
+        // Check level up
+        function checkLevelUp() {
+            const requiredPoints = gameState.level * 200;
+            if (gameState.totalPoints >= requiredPoints) {
+                gameState.level += 1;
+                updateStats();
+                showNotification(`🎉 Level up! You're now level ${gameState.level}!`);
+                
+                // Add celebration effect
+                celebrateLevel();
+            }
+        }
+
+        // Celebration effect
+        function celebrateLevel() {
+            const header = document.querySelector('.header');
+            header.style.animation = 'none';
+            setTimeout(() => {
+                header.style.animation = 'title-glow 0.5s ease-in-out 6 alternate';
+            }, 10);
+        }
+
+        // Show notification
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // Show loading
+        function showLoading() {
+            document.getElementById('loadingOverlay').classList.add('show');
+        }
+
+        // Hide loading
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.remove('show');
+        }
+
+        // Load game state (simulate)
+        function loadGameState() {
+            // In a real app, this would load from Telegram's cloud storage
+            updateStats();
+        }
+
+        // Save game state (simulate)
+        function saveGameState() {
+            // In a real app, this would save to Telegram's cloud storage
+            console.log('Game state saved:', gameState);
+        }
+
+        // Auto-save every 30 seconds
+        setInterval(saveGameState, 30000);
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', initApp);
+
+        // Telegram WebApp API integration (placeholder)
+        if (window.Telegram && window.Telegram.WebApp) {
+            Telegram.WebApp.ready();
+            Telegram.WebApp.expand();
+            
+            // Handle back button
+            Telegram.WebApp.onEvent('backButtonClicked', function() {
+                // Handle navigation
+            });
+        }
+
+        // Add touch feedback for mobile
+        document.addEventListener('touchstart', function(e) {
+            if (e.target.classList.contains('action-btn') || 
+                e.target.classList.contains('stat-card') ||
+                e.target.classList.contains('task-item')) {
+                e.target.style.transform = 'scale(0.95)';
+            }
+        });
+
+        document.addEventListener('touchend', function(e) {
+            if (e.target.classList.contains('action-btn') || 
+                e.target.classList.contains('stat-card') ||
+                e.target.classList.contains('task-item')) {
+                setTimeout(() => {
+                    e.target.style.transform = '';
+                }, 150);
+            }
+        });
+
+        // Prevent zoom on double tap
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function (event) {
+            const now = (new Date()).getTime();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+    </script>
+</body>
+</html>
